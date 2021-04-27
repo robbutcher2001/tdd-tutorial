@@ -4,6 +4,8 @@ Tutorial for approaching TDD in the front-end
 
 ## High-Level Project Requirements: A Contrived Example
 
+### PO Requirements
+
 A Product Owner has come to us with a set of requirements for a basic text transformation app they need for one of their clients. These are the requirements our PO initially asks for:
 
 - Build a simple UI with an input field, action buttons and an area for 'output cards'.
@@ -15,12 +17,14 @@ A Product Owner has come to us with a set of requirements for a basic text trans
   - Convert to 'Capitalise Case Text With Spaces'
 - The UI design and UX is down to the discretion of the developer – there are no requirements for these.
 
+### Requirements Analysis
+
 Okay, now we have our requirements. Let's think about them from a developers' point-of-view. By this, I do not mean low-level code implementation, but more what should the finished product look like from a UI perspective. The requirements outlined above scream some initial obvious points:
 
 - There should be a single input field. We can get this element by its accessible role i.e. 'textbox'. We will expect only one of these to be returned by the test query as the requirements state only an 'input field' should exist.
 - There will be several buttons to perform actions on the input text. We can get all of these buttons using a role query then find the one we want to click on in the test by inspecting its 'label'.
 - Assert there is an unordered list (ul) present on the page. You'd expect this 'ul' to be the output area containing the 'output cards'. The requirements do not state whether the 'output cards' should be unordered or ordered. Let's assume unordered for now but let's go back to the PO for some clarity on the requirements on this.
-- An 'output card' should then be represented by a List Item (li). Once you've queried the markup in your test to return all list items, you'll then be able to assert an 'output cards' content.
+- An 'output card' should then be represented by a List Item (li). Once you've queried the markup in your test to return all list items, you'll then be able to assert the contents of each 'output card'.
 
 One of my little tricks is to write tests asserting for accessible roles like 'textbox', 'button', 'list', 'link' and 'checkbox'. This will force us to write an implementation later on that is accessible. Two birds, one stone and all that!
 
@@ -28,7 +32,9 @@ Accessible role testing is best placed on the actual component view. React-testi
 
 To write the feature-file test in Cypress, we can assert for the same things we listed above (textboxes, buttons and a list) but instead of using CSS selectors, classes or element IDs, it's recommended we use 'data-' attributes on the elements. This separates the tests from the implementation, making the tests less brittle and isolating them from CSS and JS changes.
 
-Right, let's write a feature file to interact with UI asserting for the elements and interactions we are expecting to see as outlined above.
+### Writing a Feature File
+
+Right, let's write a feature file to interact with the UI, asserting for the elements and interactions we are expecting to see as outlined above.
 
 An approach I like to take is to write all the 'shoulds' first. This really makes you think about the final solution and forces you to think about how interactions will tie together. So, our simple text translation app (I typed this out exactly as I thought about it, in this order):
 
@@ -49,6 +55,8 @@ An approach I like to take is to write all the 'shoulds' first. This really make
 - Should contain a list of three cards once three action buttons have been clicked.
   - _Thoughts: okay, this is where we need to go back to our PO as ask for clarity, do we want the card history to be unordered or ordered?_
 
+### Requirements Clarification
+
 ...we speak to the PO and they comes back to us with a list of clarifications:
 
 - The 'output cards' should always remain visible once they appear, providing a history of all of the text transformations the user has performed.
@@ -57,16 +65,42 @@ An approach I like to take is to write all the 'shoulds' first. This really make
 
 ...okay, this is brilliant. Our PO has clarified that we need the 'output card' history to exist as a list (we made an assumption previously here as the original requirements were a little ambiguous and only said 'an area for output cards'.) We also have some additional clarification that the list should be ordered and also the direction of ordering. The final clarification they provided is that the app does not need to save any state to a backend or local storage. It is fine for the app state to disappear when the app is unmounted.
 
+### Conclude Feature File
+
 Okay, let's carry on defining all of our 'shoulds':
 
 - ~~Should contain a list of three cards once three action buttons have been clicked.~~
 - Should contain a list of three cards once three action buttons have been clicked, with the most recent translation at the top.
+  - _Thoughts: we should now assert for an 'ol', rather than a 'ul' as the list is ordered but this check will be done at the unit test level._
 - Should not maintain state between page (app) refreshes.
 
-That's about it for all of our end-to-end UI test definitions. Let's now create a new project and add Cypress as a dep. Here's my [first boilerplate commit](https://github.com/robbutcher2001/tdd-tutorial/commit/30a4d75968d579f833d7ac16a31bd0b953505dbd).
+That's about it for all of our UI integration test definitions. Let's now create a new project and add Cypress as a dep. Here's my [first boilerplate commit](https://github.com/robbutcher2001/tdd-tutorial/commit/30a4d75968d579f833d7ac16a31bd0b953505dbd).
 
 We can now add these to a Cypress feature file (still without their implementation):
 
 ![Int test defs](resources/int_test_defs.png)
 
 Commit: [3d3e0db](https://github.com/robbutcher2001/tdd-tutorial/commit/3d3e0db72115210aa2746ee41797b7c22635eb82).
+
+Notice how I've rearranged the 'should' test descriptions in the feature file, starting with the most simple then increasing with complexity. This is a personal preference but I find it easier to start with simple tests and that you can use to build on to make more complex ones later on.
+
+### Writing our Integration Tests
+
+Now that we've written all of our integration test descriptions, it's time to fill out the implementations. As mentioned above, it's recommended to use 'data-' attributes on elements to keep tests separate from the implementation. It's also a good idea to run the test suite making sure every test runs and fails due to an assertion not being met rather than an error in the test code we've just written.
+
+Right, let's look at the first test: 'should load with an initially empty input box'. Here, we are going to need to load the app, find an input box element and assert it has no text. We can use the Cypress API to help us:
+
+- Load the app: `cy.visit('http://localhost:3000')`
+- Get the input box and check it's empty: `cy.get('[data-testid="transformer-input"]').should('have.value', '')`
+
+..and that's it! Our first test is written. Always make sure you writes tests that are small and simple otherwise you'll likely end up writing tests with bugs in because they're too large and complex!
+
+We fill out our implementation and check that the test fails only because of assertions:
+
+![Int test 1 impl](resources/e2e_test1_impl.png)
+
+![Int test 1 run](resources/e2e_test1_run.png)
+
+We continue in the same fashion for the other integration tests, which can be seen in this commit: [8467de1](https://github.com/robbutcher2001/tdd-tutorial/commit/8467de16b1db2d77b4a18d8600950df3b386b844). We use the Cypress docs and API to build up our test suite impls. In each test, we typically load a fresh UI, interact with some things then assert UI elements are in the state we expect. The layout of the tests and the CSS selectors used should be self-descriptive, explaining what each test is doing and what we're asserting. In the later, more complex tests, we assert the first `<li />` in a list has the content we expect using CSS selectors and also that we have the `<h1 />` and `<h2 />` headings in the places we expect them to be for the Output Cards.
+
+By writing these tests first, we are forced to think of the html tags we intend to use for layout in the app. This helps us think about structure and ultimately, will make the implementation easier because we've already thought about the details of the app form end-to-end and how things will join up. Later, when writing unit tests for individual components, this same process will force us to think about the contract between components in a similar way, ahead of writing any implementation.
