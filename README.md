@@ -109,6 +109,8 @@ By writing these tests first, we are forced to think of the html tags we intend 
 
 ## Component Unit Tests
 
+### First Component
+
 Whilst we were writing our integration tests, we were made to think about the final solution as a whole. This gave us a rough idea of how we might implement it. Now we have that in mind, it's time to think about how we break that down into components.
 
 Analysis of the requirements and writing of the integration tests has helped us realise we probably need the following components in order for our app to meet the feature requirements:
@@ -188,3 +190,14 @@ it("should display passed prop text", () => {
 Note, here we are not only asserting we find an element with the visible text, we are also using `getByLabelText` to make sure the button has been implemented with accessibility in mind. The button should be surrounded by a `<label />` tag if within a form or have an `aria-label` attribute if not. Remember to go back through the tests you've already written and add in the mandatory `label` prop you've just added to the contract.
 
 That concludes the tests for the button. All of the requirements and responsibilities of the button are now covered by tests. The tests for the button can be found in this commit: [aedfc7c](https://github.com/robbutcher2001/tdd-tutorial/commit/aedfc7c8aec0991cee918a5f28d5ed3b22f2bc12).
+
+### Other Components
+
+Okay, let's now do the same for the remaining 3 components.
+
+#### Input Component
+
+Points to note:
+
+- in typical React fashion, this will need to be a controlled component where any change of value in the input field, will need to set state in its container in order for the container to use the value of the input.
+- this also means the value of the input should always be set externally. In this scenario, this is by the container. The input should therefore allow its value to be set by a prop.
