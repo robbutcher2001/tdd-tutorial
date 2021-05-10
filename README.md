@@ -187,4 +187,4 @@ it("should display passed prop text", () => {
 
 Note, here we are not only asserting we find an element with the visible text, we are also using `getByLabelText` to make sure the button has been implemented with accessibility in mind. The button should be surrounded by a `<label />` tag if within a form or have an `aria-label` attribute if not. Remember to go back through the tests you've already written and add in the mandatory `label` prop you've just added to the contract.
 
-That concludes the tests for the button. All of the requirements and responsibilities of the button are now covered by tests. The tests for the button can be found in this commit: .
+That concludes the tests for the button. All of the requirements and responsibilities of the button are now covered by tests. The tests for the button can be found in this commit: [aedfc7c](https://github.com/robbutcher2001/tdd-tutorial/commit/aedfc7c8aec0991cee918a5f28d5ed3b22f2bc12).
