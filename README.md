@@ -197,7 +197,35 @@ Okay, let's now do the same for the remaining 3 components.
 
 #### Input Component
 
+The job of this component is to accept the user's input and update its parent with the value. The parent will manage the state of this component, making this a controlled component.
+
 Points to note:
 
-- in typical React fashion, this will need to be a controlled component where any change of value in the input field, will need to set state in its container in order for the container to use the value of the input.
+- all value changes in the input field will need to set state in its container in order for the container to use the value of the input.
 - this also means the value of the input should always be set externally. In this scenario, this is by the container. The input should therefore allow its value to be set by a prop.
+
+Input tests can be found in this commit: [ba0ab2c](https://github.com/robbutcher2001/tdd-tutorial/commit/ba0ab2cb1acc71f9a7834a3f9eac71938ceaa6c9).
+
+#### OutputCardContainer Component
+
+The job of this component is to manage all of its OutputCards (list items.) Each OutputCard will be a child of this component. Based on the requirements analysis we did earlier, we know that this list container should:
+
+- initially load with no items to list.
+- should maintain the order of the list items once there are 2 or more items to list.
+
+In true unit test fashion, we need to mock anything external to the component we are testing. As this component renders children, we'll have to write a (very basic) mock OutputCard because we don't want to test the real OutputCard in the OutputCardContainer tests! With Jest, you can mock any dependencies of the container directly in the test:
+
+```
+jest.mock("../OutputCard", () => ({
+  __esModule: true,
+  default: ({ originalText }: { originalText: MockProps }) => (
+    <li>{originalText}</li>
+  ),
+}));
+```
+
+Here we are mocking the OutputCard import - this is an import that the OutputCardContainer will need to import. We are providing a manual mock for the `default` export where we render a simple `<li />`, representing a single OutputCard (list item.) The `<li />` is rendered with a single passed prop, just so we have something to assert in the tests. Full detail can be found in this commit: [36070ec](https://github.com/robbutcher2001/tdd-tutorial/commit/36070ece314c070f98c586a64c72845d99fdda39).
+
+Points to note:
+
+- the OutputCardContainer will not manage the list of data to display as OutputCards as this will be done by the parent app, instead it will be provided with an array of OutputCard data.
