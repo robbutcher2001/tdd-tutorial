@@ -32,6 +32,8 @@ Accessible role testing is best placed on the actual component view. React-testi
 
 To write the feature-file test in Cypress, we can assert for the same things we listed above (textboxes, buttons and a list) but instead of using CSS selectors, classes or element IDs, it's recommended we use 'data-' attributes on the elements. This separates the tests from the implementation, making the tests less brittle and isolating them from CSS and JS changes.
 
+## Integration Tests
+
 ### Writing a Feature File
 
 Right, let's write a feature file to interact with the UI, asserting for the elements and interactions we are expecting to see as outlined above.
@@ -103,4 +105,86 @@ We fill out our implementation and check that the test fails only because of ass
 
 We continue in the same fashion for the other integration tests, which can be seen in this commit: [8467de1](https://github.com/robbutcher2001/tdd-tutorial/commit/8467de16b1db2d77b4a18d8600950df3b386b844). We use the Cypress docs and API to build up our test suite impls. In each test, we typically load a fresh UI, interact with some things then assert UI elements are in the state we expect. The layout of the tests and the CSS selectors used should be self-descriptive, explaining what each test is doing and what we're asserting. In the later, more complex tests, we assert the first `<li />` in a list has the content we expect using CSS selectors and also that we have the `<h1 />` and `<h2 />` headings in the places we expect them to be for the Output Cards.
 
-By writing these tests first, we are forced to think of the html tags we intend to use for layout in the app. This helps us think about structure and ultimately, will make the implementation easier because we've already thought about the details of the app form end-to-end and how things will join up. Later, when writing unit tests for individual components, this same process will force us to think about the contract between components in a similar way, ahead of writing any implementation.
+By writing these tests first, we are forced to think of the html tags we intend to use for layout in the app. This helps us think about structure and ultimately, will make the implementation easier because we've already thought about the details of the app from end-to-end and how things will join up. Later, when writing unit tests for individual components, this same process will force us to think about the contract between components in a similar way, ahead of writing any implementation.
+
+## Component Unit Tests
+
+Whilst we were writing our integration tests, we were made to think about the final solution as a whole. This gave us a rough idea of how we might implement it. Now we have that in mind, it's time to think about how we break that down into components.
+
+Analysis of the requirements and writing of the integration tests has helped us realise we probably need the following components in order for our app to meet the feature requirements:
+
+- a single input field
+- a button (one of these for each of the 4 x actions)
+- an output card list container
+- an output card list item (multiple of these to populate the output card list container)
+
+Let's choose the most simple, probably the button, and dive straight in with writing a test. We know from the requirements that the button needs to offer a disabled state as well as an enabled one. Let's start by writing a test for this. Remember, this is where we also start accessible role testing!
+
+```
+describe("Button component", () => {
+  it("should be able to be disabled", () => {
+    const { getByRole } = render(<Button disabled />);
+
+    expect(getByRole("button")).toBeDisabled();
+  });
+});
+```
+
+We can also now test for the inverse if we do not provide the `disabled` prop:
+
+```
+it("should be enabled by default", () => {
+  const { getByRole } = render(<Button />);
+
+  expect(getByRole("button")).toBeEnabled();
+});
+```
+
+What else does this button need to do? We will need to provide a callback function to the component in the app so we can handle button interaction. Let's write a test for that:
+
+```
+it("should call the callback", () => {
+  const mockCallback = jest.fn();
+
+  const { getByRole } = render(<Button callback={mockCallback} />);
+
+  getByRole("button").click();
+
+  expect(mockCallback).toHaveBeenCalledTimes(1);
+});
+```
+
+Note, we have added a `callback` prop to the contract between the container and the component. Let's go back and retrospectively add this to the other tests we've already written. The callback does not need to be a function we intend to use, just there to fulfil the contract in the tests:
+
+```
+it("should be enabled by default", () => {
+  const { getByRole } = render(<Button callback={() => {}} />);
+
+  expect(getByRole("button")).toBeEnabled();
+});
+
+it("should be able to be disabled", () => {
+  const { getByRole } = render(<Button disabled callback={() => {}} />);
+
+  expect(getByRole("button")).toBeDisabled();
+});
+```
+
+That's it in terms of tests that fulfil the requirements from the Product Owner but have we missed anything? Well, the button needs to render some text to display for the user right? That's something we've missed in our tests so let's add a test for that:
+
+```
+it("should display passed prop text", () => {
+  const { getByText, getByLabelText } = render(
+    <Button label='lowercase_action' callback={() => {}}>
+     Lowercase
+    </Button>
+  );
+
+  expect(getByText("Lowercase")).toBeInTheDocument();
+  expect(getByLabelText("lowercase_action")).toBeInTheDocument();
+});
+```
+
+Note, here we are not only asserting we find an element with the visible text, we are also using `getByLabelText` to make sure the button has been implemented with accessibility in mind. The button should be surrounded by a `<label />` tag if within a form or have an `aria-label` attribute if not. Remember to go back through the tests you've already written and add in the mandatory `label` prop you've just added to the contract.
+
+That concludes the tests for the button. All of the requirements and responsibilities of the button are now covered by tests. The tests for the button can be found in this commit: .
